@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Resume Form</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #3498db;
+        }
+        h3,h4 {
+            text-align: center;
+            margin-top: 20px;
+            color: #db8d34;
+        }
+
+
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield; /* Hide number spinner in Firefox */
+        }
+
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Hidden Fields */
+        .hidden {
+            display: none;
+        }
+
+        /* Loader Style */
+        #loader {
+            display: none; /* Hide by default */
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Nylas Button */
+        #nylasSignInButton {
+            display: block;
+            margin: 20px auto;
+            background-color: #e67e22;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #nylasSignInButton:hover {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body>
+    <h1>Submit Job Information</h1>
+    <h3>Submit it once, and get "Ready to apply" Resumes, on your draft box. Type out the compnay email, and just click send !</h3>
+    <h4>Apply to hundreds of companies, easily in one shot !</h4>
+    <form onsubmit="handleSubmit(event)">
+        <label for="keyword">Job Search Keyword:</label>
+        <input type="text" id="keyword" name="keyword" required>
+        
+        <label for="limit">Number of job positions to apply:</label>
+        <input type="number" id="limit" name="limit" required>
+        
+        <label for="grantID">Grant ID (visible only on sign in):</label>
+        <input type="text" id="grantID" name="grantID" value="" disabled required>
+        
+        <!-- Additional Fields -->
+        <div id="additionalFields" class="hidden">
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="experienceTitle">Experience Title on prveious company:</label>
+            <input type="text" id="experienceTitle" name="experienceTitle" required>
+            
+            <label for="experienceDescription">Experience in detail:</label>
+            <textarea id="experienceDescription" name="experienceDescription" rows="4" required></textarea>
+            
+            <label for="role">Previous company Role:</label>
+            <input type="text" id="role" name="role" required>
+            
+            <label for="education">Education:</label>
+            <input type="text" id="education" name="education" required>
+            
+            <label for="skills">Skills:</label>
+            <input type="text" id="skills" name="skills" required>
+            
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="tel" id="phoneNumber" name="phoneNumber" required>
+            
+            <label for="emailAddress">Email Address:</label>
+            <input type="email" id="emailAddress" name="emailAddress" required>
+            
+            <label for="linkedinUrl">LinkedIn URL:</label>
+            <input type="url" id="linkedinUrl" name="linkedinUrl" required>
+        </div>
+
+        <button type="submit" id="submitButton" style="display:none;">Submit</button>
+    </form>
+    
+    <!-- Nylas Sign-In button -->
+    <button id="nylasSignInButton" style="display:none;" onclick="initiateNylasAuth()">Sign in / Register to submit</button>
+
+    <!-- Loader -->
+    <div id="loader"></div>
+
+    <script>
+        function getParameterByName(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function handleFormButtons() {
+            const grantIDField = document.getElementById('grantID');
+            const nylasSignInButton = document.getElementById('nylasSignInButton');
+            const submitButton = document.getElementById('submitButton');
+            const additionalFields = document.getElementById('additionalFields');
+
+            const grantID = getParameterByName('id');
+            if (grantID) {
+                grantIDField.value = grantID;
+                submitButton.style.display = 'inline';
+                nylasSignInButton.style.display = 'none';
+                additionalFields.classList.remove('hidden');
+            } else {
+                submitButton.style.display = 'none';
+                nylasSignInButton.style.display = 'inline';
+                additionalFields.classList.add('hidden');
+            }
+        }
+
+        function initiateNylasAuth() {
+            const authenticationUrl = "<%= backendUrl%>";
+            const authUrl = `${authenticationUrl}/auth/nylas/hostedAuth`;
+            window.location.href = authUrl;
+        }
+
+        window.addEventListener('message', function(event) {
+            // Validate the origin of the message for security
+            if (event.origin !== '<YOUR_DOMAIN>') { // Replace with your actual domain
+                console.error('Invalid origin');
+                return;
+            }
+        
+            const data = event.data;
+            if (typeof data === 'string' && data.startsWith('http')) {
+                console.log('Received URL from popup:', data);
+                // Use the URL as needed
+            }
+        });
+
+        function handleSubmit(event) {
+            event.preventDefault(); // Prevent the default form submission
+        
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            const userInfo = {};
+            const data = {};
+        
+            let arr = ['keyword', 'limit', 'grantID'];
+            formData.forEach((value, key) => {
+                if (arr.indexOf(key) != -1) {
+                    data[key] = value;
+                } else {
+                    userInfo[key] = value;
+                }
+            });
+        
+            data['grantID'] = getParameterByName('id');
+            // Show loader and disable submit button
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('submitButton').disabled = true;
+        
+            // Send the JSON data
+            fetch('/getJobs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data, userInfo }), // Send as { data, userInfo }
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('Success:', result);
+                // Redirect to the thank you page
+                window.location.href = '/thank-you'; // Update this URL to your actual thank you page URL
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Hide loader and enable submit button
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('submitButton').disabled = false;
+            });
+        }
+        
+        window.onload = handleFormButtons;
+    </script>
+</body>
+</html>
